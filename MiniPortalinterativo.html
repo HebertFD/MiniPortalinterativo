@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Portal Interativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    
+    :root{
+      --bg: #0f1724;
+      --card: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      --glass: rgba(255,255,255,0.04);
+      --accent: linear-gradient(90deg,#7c3aed,#06b6d4);
+      --text: #e6eef8;
+      --muted: #9fb0c8;
+      --glass-border: rgba(255,255,255,0.06);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+    }
+
+    [data-theme="light"]{
+      --bg: #f6f9fc;
+      --background-color: #f4ecec;
+      --card: linear-gradient(180deg,#ffffff,#f7fbff);
+      --glass: rgba(231, 234, 237, 0.03);
+      --accent: linear-gradient(90deg,#7c3aed,#06b6d4);
+      --text: #071226;
+      --muted: #475569;
+      --glass-border: rgba(7,18,38,0.06);
+      --shadow: 0 8px 30px rgba(12,37,64,0.08);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:var(--text);background:linear-gradient(180deg,#071226 0%, #071a2a 50%);}
+    [data-theme="light"] body{background: linear-gradient(180deg,#f0f6ff 0%, #eef7ff 50%)}
+
+    .app{
+      display:grid;
+      grid-template-columns:280px 1fr;
+      gap:24px;
+      padding:28px;
+      min-height:100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      background:var(--card);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--glass-border);
+      height:calc(100vh - 56px);
+      position:sticky;top:28px;overflow:auto;
+    }
+
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:48px;height:48px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 6px 18px rgba(12,37,64,0.2)}
+    .brand h1{font-size:18px;margin:0}
+    .muted{color:var(--muted);font-size:13px}
+
+    nav{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .nav-link{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none;cursor:pointer}
+    .nav-link:hover{transform:translateX(6px);transition:all .18s}
+    .nav-link.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));border:1px solid rgba(255,255,255,0.03)}
+
+    .theme-toggle{margin-top:16px;display:flex;gap:8px;align-items:center}
+    .top-clock{margin-top:18px;padding:10px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--glass-border);}
+
+    .main{
+      padding:8px 6px 28px 6px;height:calc(100vh - 56px);overflow:auto;
+    }
+
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .search{flex:1;display:flex;gap:12px}
+
+    .card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--glass-border);box-shadow:var(--shadow);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+
+    h2{margin:0 0 12px 0}
+ 
+    .tile{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:flex;flex-direction:column;gap:10px;min-height:120px;justify-content:space-between}
+    .tile .title{font-weight:600}
+    .cta{align-self:flex-end;padding:8px 12px;border-radius:8px;background:var(--accent);color:white;font-weight:600;border:none;cursor:pointer}
+
+    input,button,select,textarea{font-family:inherit}
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+    input[type="text"],input[type="password"],input[type="number"],select,textarea{padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:var(--text)}
+
+    .todo-list{display:flex;flex-direction:column;gap:8px}
+    .todo-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:transparent;border:1px dashed var(--glass-border)}
+
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+    .gallery img{width:100%;height:110px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.04);transition:transform .2s;cursor:pointer}
+    .gallery img:hover{transform:scale(1.03)}
+
+    .row{display:flex;gap:12px;align-items:center}
+    .col{display:flex;flex-direction:column;gap:8px}
+
+    @media(max-width:900px){.app{grid-template-columns:1fr;}.sidebar{position:relative;height:auto;}}
+
+    .pulse{animation:pulse 3s infinite}
+    @keyframes pulse{0%{transform:translateY(0)}50%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+
+    .footer{margin-top:20px;font-size:13px;color:var(--muted)}
+
+    .clock-badge{padding:10px 14px;border-radius:999px;background:linear-gradient(90deg,#0ea5a5, #7c3aed);color:white;font-weight:700;box-shadow:0 6px 20px rgba(12,37,64,0.18)}
+
+    .tiny{font-size:13px;color:var(--muted)}
+    .btn{padding:8px 10px;border-radius:8px;border:none;background:var(--accent);color:white;font-weight:600;cursor:pointer}
+
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <aside class="sidebar card">
+      <div class="brand">
+        <div class="logo">MP</div>
+        <div>
+          <h1>Mini Portal</h1>
+          <div class="muted">Interativo • HTML/CSS/JS</div>
+        </div>
+      </div>
+
+      <nav id="nav">
+        <div class="nav-link active" data-target="home">🏠 Início</div>
+        <div class="nav-link" data-target="auth">🔐 Login / Cadastro</div>
+        <div class="nav-link" data-target="calc">🧮 Calculadora</div>
+        <div class="nav-link" data-target="count">⏱ Contador / Cronômetro</div>
+        <div class="nav-link" data-target="todo">🗒 Lista de Tarefas</div>
+        <div class="nav-link" data-target="conv">🌡 Conversor</div>
+        <div class="nav-link" data-target="pass">🔑 Gerador de Senhas</div>
+        <div class="nav-link" data-target="gallery">🖼 Galeria</div>
+        
+      </nav>
+
+      <div class="theme-toggle">
+        <button id="toggleTheme" class="btn" title="Alternar tema">🌙 Modo</button>
+        <div class="muted tiny">Tema claro/escuro</div>
+      </div>
+
+      <div class="top-clock card" style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="tiny">Relógio</div>
+          <div id="miniClock" class="clock-badge">--:--:--</div>
+        </div>
+        <div id="dateLine" class="tiny" style="margin-top:8px">--</div>
+      </div>
+
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <h2 id="pageTitle">Início</h2>
+          <div class="tiny" id="pageHint">Painel com atalhos e visão geral</div>
+        </div>
+        <div class="row">
+          <input id="searchInput" placeholder="Pesquisar seção..." style="padding:10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--text)">
+          <div class="card tiny" style="padding:8px 12px">Usuário: <strong id="userName">Não logado</strong></div>
+        </div>
+      </header>
+
+      <section id="home" class="page card" style="display:block">
+        <h2>Bem-vindo ao Mini Portal</h2>
+        <p class="tiny">Clique em qualquer bloco para abrir a ferramenta correspondente.</p>
+
+        <div class="grid" style="margin-top:12px">
+          <div class="tile" onclick="openSection('auth')">
+            <div>
+              <div class="title">🔐 Login / Cadastro</div>
+              <div class="tiny">Área para cadastro local (fake) e login.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('calc')">
+            <div>
+              <div class="title">🧮 Calculadora</div>
+              <div class="tiny">Calculadora básica com operações.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('count')">
+            <div>
+              <div class="title">⏱ Contador / Cronômetro</div>
+              <div class="tiny">Contador simples e cronômetro com start/stop.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('todo')">
+            <div>
+              <div class="title">🗒 Lista de tarefas</div>
+              <div class="tiny">Adicionar, concluir e salvar no navegador.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('conv')">
+            <div>
+              <div class="title">🌡 Conversor</div>
+              <div class="tiny">Temperatura e conversão de moeda (estática).</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('pass')">
+            <div>
+              <div class="title">🔑 Gerador de senhas</div>
+              <div class="tiny">Crie senhas seguras com opções.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          <div class="tile" onclick="openSection('gallery')">
+            <div>
+              <div class="title">🖼 Galeria</div>
+              <div class="tiny">Galeria com lightbox simples.</div>
+            </div>
+            <button class="cta">Abrir</button>
+          </div>
+
+          
+        </div>
+
+      </section>
+
+      <!-- AUTENTICAÇÃO -->
+      <section id="auth" class="page" style="display:none">
+        <div class="card">
+          <h2>Login / Cadastro (fake)</h2>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+            <div style="flex:1;min-width:260px">
+              <div class="field"><label>Nome de usuário</label><input id="regUser" type="text" placeholder="usuário"></div>
+              <div class="field"><label>Email</label><input id="regEmail" type="text" placeholder="email@exemplo.com"></div>
+              <div class="field"><label>Senha</label><input id="regPass" type="password" placeholder="senha"></div>
+              <button class="btn" onclick="register()">Cadastrar</button>
+            </div>
+            <div style="flex:1;min-width:260px">
+              <div class="field"><label>Nome de usuário</label><input id="loginUser" type="text" placeholder="usuário"></div>
+              <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="senha"></div>
+              <button class="btn" onclick="login()">Entrar</button>
+              
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALCULADORA -->
+      <section id="calc" class="page" style="display:none">
+        <div class="card">
+          <h2>Calculadora</h2>
+          <div style="margin-top:12px;max-width:420px">
+            <input id="calcDisplay" type="text" placeholder="0" style="width:100%;font-size:18px;padding:12px;border-radius:8px;margin-bottom:8px">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <button class="btn" onclick="press('7')">7</button>
+              <button class="btn" onclick="press('8')">8</button>
+              <button class="btn" onclick="press('9')">9</button>
+              <button class="btn" onclick="press('/')">÷</button>
+
+              <button class="btn" onclick="press('4')">4</button>
+              <button class="btn" onclick="press('5')">5</button>
+              <button class="btn" onclick="press('6')">6</button>
+              <button class="btn" onclick="press('*')">×</button>
+
+              <button class="btn" onclick="press('1')">1</button>
+              <button class="btn" onclick="press('2')">2</button>
+              <button class="btn" onclick="press('3')">3</button>
+              <button class="btn" onclick="press('-')">−</button>
+
+              <button class="btn" onclick="press('0')">0</button>
+              <button class="btn" onclick="press('.')">.</button>
+              <button class="btn" onclick="calcEqual()">=</button>
+              <button class="btn" onclick="press('+')">+</button>
+            </div>
+            <button style="margin-top:8px" class="btn" onclick="calcClear()">Limpar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTADOR & TIMER -->
+      <section id="count" class="page" style="display:none">
+        <div class="card">
+          <h2>Contador Rápido</h2>
+          <div class="row" style="margin-top:12px;align-items:center">
+            <div style="font-size:32px;font-weight:700" id="counterVal">0</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn" onclick="inc()">Aumentar</button>
+              <button class="btn" onclick="dec()">Diminuir</button>
+              <button class="btn" onclick="resetCount()">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2>Cronômetro</h2>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+            <div style="font-size:28px;font-weight:700" id="stopwatch">00:00:00</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn" onclick="swStart()">Start</button>
+              <button class="btn" onclick="swStop()">Stop</button>
+              <button class="btn" onclick="swReset()">Reset</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LISTA DE TAREFAS -->
+      <section id="todo" class="page" style="display:none">
+        <div class="card">
+          <h2>Lista de Tarefas</h2>
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+            <input id="todoInput" type="text" placeholder="Digite uma tarefa" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--glass-border)">
+            <button class="btn" onclick="addTodo()">Adicionar</button>
+          </div>
+          <div id="todos" class="todo-list" style="margin-top:12px"></div>
+        </div>
+      </section>
+
+      <!-- CONVERSOR -->
+      <section id="conv" class="page" style="display:none">
+        <div class="card">
+          <h2>Conversor</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+            <div>
+              <h3 class="tiny">Temperatura</h3>
+              <div class="field"><input id="tempIn" type="number" placeholder="Valor" /></div>
+              <div class="field">
+                <select id="tempType"><option value="c2f">Celsius → Fahrenheit</option><option value="f2c">Fahrenheit → Celsius</option></select>
+              </div>
+              <button class="btn" onclick="convertTemp()">Converter</button>
+              <div id="tempOut" class="tiny" style="margin-top:8px"></div>
+            </div>
+
+            <div>
+              <h3 class="tiny">Moeda (estimada)</h3>
+              <div class="field"><input id="moneyIn" type="number" placeholder="Valor em BRL (exemplo)" /></div>
+              <div class="field"><select id="moneyType"><option value="brl2usd">BRL → USD (est)</option><option value="usd2brl">USD → BRL (est)</option></select></div>
+              <button class="btn" onclick="convertMoney()">Converter</button>
+              <div id="moneyOut" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GERADOR DE SENHAS -->
+      <section id="pass" class="page" style="display:none">
+        <div class="card">
+          <h2>Gerador de Senhas</h2>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap">
+            <div class="field"><label>Tamanho</label><input id="passLen" type="number" min="4" max="64" value="16"></div>
+            <div class="field"><label><input id="useUpper" type="checkbox" checked> Incluir Maiúsculas</label></div>
+            <div class="field"><label><input id="useNumbers" type="checkbox" checked> Incluir Números</label></div>
+            <div class="field"><label><input id="useSymbols" type="checkbox"> Incluir Símbolos</label></div>
+            <button class="btn" onclick="genPass()">Gerar</button>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <input id="passOut" type="text" readonly style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--glass-border)">
+            <button class="btn" onclick="copyPass()">Copiar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALLERIA -->
+      <section id="gallery" class="page" style="display:none">
+        <div class="card">
+          <h2>Galeria de Fotos</h2>
+          <div class="tiny">Clique em uma imagem para abrir em modo ampliado.</div>
+          <div class="gallery" style="margin-top:12px">
+            <img src="https://picsum.photos/id/1015/400/300" alt="1" onclick="openLightbox(this.src)">
+            <img src="https://picsum.photos/id/1016/400/300" alt="2" onclick="openLightbox(this.src)">
+            <img src="https://picsum.photos/id/1025/400/300" alt="3" onclick="openLightbox(this.src)">
+            <img src="https://picsum.photos/id/1035/400/300" alt="4" onclick="openLightbox(this.src)">
+            <img src="https://picsum.photos/id/1042/400/300" alt="5" onclick="openLightbox(this.src)">
+            <img src="https://picsum.photos/id/1050/400/300" alt="6" onclick="openLightbox(this.src)">
+          </div>
+        </div>
+      </section>
+
+      
+
+      <!-- LIGHTBOX -->
+      <div id="lightbox" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:9999">
+        <img id="lightboxImg" src="" style="max-width:90%;max-height:80%;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,0.6)">
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // navegação
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pages = document.querySelectorAll('.page');
+    const pageTitle = document.getElementById('pageTitle');
+    const pageHint = document.getElementById('pageHint');
+
+    function openSection(id){
+      pages.forEach(p=>p.style.display='none');
+      document.getElementById(id).style.display='block';
+      navLinks.forEach(n=>n.classList.toggle('active', n.dataset.target===id));
+      pageTitle.textContent = ({home:'Início',auth:'Login / Cadastro',calc:'Calculadora',count:'Contador / Cronômetro',todo:'Lista de Tarefas',conv:'Conversor',pass:'Gerador de Senhas',gallery:'Galeria',quote:'Frases'}[id]||'Página');
+      pageHint.textContent = '';
+    }
+
+    navLinks.forEach(n=>n.addEventListener('click',()=>openSection(n.dataset.target)));
+
+    // THEME
+    const body = document.body;
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    toggleThemeBtn.addEventListener('click',()=>{
+      const cur = body.getAttribute('data-theme')||'dark';
+      const next = cur==='dark'?'light':'dark';
+      body.setAttribute('data-theme', next);
+      localStorage.setItem('mp_theme', next);
+    });
+    // load theme
+    const savedTheme = localStorage.getItem('mp_theme');
+    if(savedTheme) body.setAttribute('data-theme', savedTheme);
+
+    // relogio
+    function pad(n){return n.toString().padStart(2,'0')}
+    function updateClock(){
+      const now = new Date();
+      document.getElementById('miniClock').textContent = pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+      document.getElementById('dateLine').textContent = now.toLocaleDateString();
+    }
+    setInterval(updateClock,1000);updateClock();
+
+    // autenticação (fake)
+    function register(){
+      const u=document.getElementById('regUser').value.trim();
+      const e=document.getElementById('regEmail').value.trim();
+      const p=document.getElementById('regPass').value;
+      if(!u||!p){alert('Informe usuário e senha.');return}
+      const users = JSON.parse(localStorage.getItem('mp_users')||'{}');
+      if(users[u]){alert('Usuário já existe.');return}
+      users[u]={email:e,pass:p};
+      localStorage.setItem('mp_users', JSON.stringify(users));
+      alert('Cadastro realizado! Faça login.');
+      document.getElementById('regUser').value='';document.getElementById('regEmail').value='';document.getElementById('regPass').value='';
+    }
+    function login(){
+      const u=document.getElementById('loginUser').value.trim();
+      const p=document.getElementById('loginPass').value;
+      const users = JSON.parse(localStorage.getItem('mp_users')||'{}');
+      if(users[u] && users[u].pass===p){
+        localStorage.setItem('mp_user', u);
+        document.getElementById('userName').textContent = u;
+        alert('Logado como: '+u);
+        document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+      }else alert('Usuário ou senha inválidos.');
+    }
+    // mostrar usuario atual
+    const curUser = localStorage.getItem('mp_user');
+    if(curUser) document.getElementById('userName').textContent = curUser;
+
+    // CALCULADORA
+    let calcExp='';
+    const disp = document.getElementById('calcDisplay');
+    function press(v){ calcExp += v; disp.value = calcExp; }
+    function calcClear(){ calcExp=''; disp.value=''; }
+    function calcEqual(){ try{ const res = Function('return '+calcExp)(); disp.value = res; calcExp = ''+res; }catch(e){alert('Expressão inválida');} }
+
+    // contador
+    let count = Number(localStorage.getItem('mp_count')||0); document.getElementById('counterVal').textContent = count;
+    function inc(){ count++; document.getElementById('counterVal').textContent=count; localStorage.setItem('mp_count',count); }
+    function dec(){ count--; document.getElementById('counterVal').textContent=count; localStorage.setItem('mp_count',count); }
+    function resetCount(){ count=0; document.getElementById('counterVal').textContent=count; localStorage.setItem('mp_count',count); }
+
+    // cronometro simples
+    let swInterval=null, swStartTime=0, swElapsed=0;
+    function swStart(){ if(swInterval) return; swStartTime = Date.now() - swElapsed; swInterval = setInterval(()=>{ swElapsed = Date.now() - swStartTime; updateSw(); }, 200); }
+    function swStop(){ clearInterval(swInterval); swInterval=null; }
+    function swReset(){ swStop(); swElapsed=0; updateSw(); }
+    function updateSw(){ const s = Math.floor(swElapsed/1000); const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); const sec = s%60; document.getElementById('stopwatch').textContent = pad(h)+':'+pad(m)+':'+pad(sec); }
+
+    // tarefas
+    function loadTodos(){ const t = JSON.parse(localStorage.getItem('mp_todos')||'[]'); const container = document.getElementById('todos'); container.innerHTML=''; t.forEach((it,idx)=>{
+        const div = document.createElement('div'); div.className='todo-item';
+        div.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><input type=checkbox ${it.done? 'checked':''} onchange="toggleTodo(${idx})"> <div style='${it.done?"text-decoration:line-through;color:var(--muted)":""}'>${escapeHtml(it.text)}</div></div><div style='display:flex;gap:6px'><button class=btn onclick=removeTodo(${idx})>Remover</button></div>`;
+        container.appendChild(div);
+      }); }
+    function saveTodos(list){ localStorage.setItem('mp_todos', JSON.stringify(list)); }
+    function addTodo(){ const v=document.getElementById('todoInput').value.trim(); if(!v) return; const list = JSON.parse(localStorage.getItem('mp_todos')||'[]'); list.push({text:v,done:false}); saveTodos(list); document.getElementById('todoInput').value=''; loadTodos(); }
+    function removeTodo(i){ const list = JSON.parse(localStorage.getItem('mp_todos')||'[]'); list.splice(i,1); saveTodos(list); loadTodos(); }
+    function toggleTodo(i){ const list = JSON.parse(localStorage.getItem('mp_todos')||'[]'); list[i].done = !list[i].done; saveTodos(list); loadTodos(); }
+    function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    loadTodos();
+
+    // conversores
+    function convertTemp(){ const v=Number(document.getElementById('tempIn').value); const t=document.getElementById('tempType').value; if(isNaN(v)){ alert('Informe um número'); return };
+      let out=''; if(t==='c2f') out = (v*9/5 + 32).toFixed(2)+' °F'; else out = ((v-32)*5/9).toFixed(2)+' °C'; document.getElementById('tempOut').textContent = out;
+    }
+    // valor estatico de conversão
+    const RATE = 5.2;
+    function convertMoney(){ const v=Number(document.getElementById('moneyIn').value); const t=document.getElementById('moneyType').value; if(isNaN(v)){ alert('Informe um número'); return };
+      let out=''; if(t==='brl2usd') out = '≈ $'+(v/RATE).toFixed(2)+' USD'; else out = '≈ R$'+(v*RATE).toFixed(2)+' BRL'; document.getElementById('moneyOut').textContent = out; }
+
+    // gerador de senhas
+    function genPass(){ const len = Number(document.getElementById('passLen').value)||16; const upper = document.getElementById('useUpper').checked; const nums = document.getElementById('useNumbers').checked; const syms = document.getElementById('useSymbols').checked; let chars = 'abcdefghijklmnopqrstuvwxyz'; if(upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; if(nums) chars += '0123456789'; if(syms) chars += '!@#$%^&*()-_=+[]{}<>?'; let out=''; for(let i=0;i<len;i++){ out += chars[Math.floor(Math.random()*chars.length)]; } document.getElementById('passOut').value = out; }
+    function copyPass(){ const el = document.getElementById('passOut'); el.select(); document.execCommand('copy'); alert('Senha copiada!'); }
+
+    // LIGHTBOX
+    const lb = document.getElementById('lightbox'); function openLightbox(src){ document.getElementById('lightboxImg').src = src; lb.style.display='flex'; }
+    lb.addEventListener('click',()=>{ lb.style.display='none'; document.getElementById('lightboxImg').src=''; });
+
+    // pesquisa
+    document.getElementById('searchInput').addEventListener('input', (e)=>{
+      const v = e.target.value.toLowerCase(); if(!v) return; for(const n of navLinks){ if(n.textContent.toLowerCase().includes(v)){ n.click(); break; } }
+    });
+
+    // home
+    openSection('home');
+  </script>
+</body>
+</html>
